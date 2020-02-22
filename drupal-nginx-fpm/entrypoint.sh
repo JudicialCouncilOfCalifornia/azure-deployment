@@ -1,0 +1,159 @@
+#!/bin/bash
+
+# set -e
+
+php -v
+
+fresh_drupal_installation(){
+  while test -d "$DRUPAL_PRJ"
+    do
+      test ! -d "/home/bak" && mkdir -p "/home/bak"
+      echo "INFO: $DRUPAL_PRJ exists. Clean it ..."
+      mv $DRUPAL_PRJ /home/bak/drupal_prj_bak_$(date +%s)
+    done
+
+  test ! -d "$DRUPAL_PRJ" && echo "INFO: $DRUPAL_PRJ not found. Creating..." && mkdir -p "$DRUPAL_PRJ"
+
+  cd $DRUPAL_PRJ
+  GIT_REPO=${GIT_REPO:-https://github.com/JudicialCouncilOfCalifornia/trialcourt}
+  GIT_BRANCH=${GIT_BRANCH:-develop}
+  echo "INFO: ++++++++++++++++++++++++++++++++++++++++++++++++++:"
+  echo "REPO: "$GIT_REPO
+  echo "BRANCH: "$GIT_BRANCH
+  echo "INFO: ++++++++++++++++++++++++++++++++++++++++++++++++++:"
+
+  echo "INFO: Clone from "$GIT_REPO
+  git clone $GIT_REPO $DRUPAL_PRJ	&& cd $DRUPAL_PRJ
+  if [ "$GIT_BRANCH" != "master" ];then
+    echo "INFO: Checkout to "$GIT_BRANCH
+    git fetch origin
+    git branch --track $GIT_BRANCH origin/$GIT_BRANCH && git checkout $GIT_BRANCH
+  fi
+
+  composer install
+}
+
+# Setup Drupal
+setup_drupal(){
+  if [ ! -d "$DRUPAL_PROJECT" ] || [ "$RESET_INSTANCE" ];then
+    # New installation or explicit reset
+    fresh_drupal_installation
+  fi
+
+#    if [ $DATABASE_USERNAME ]; then
+#        #cd $DRUPAL_PRJ/web/core/lib/Drupal/Core/Database/Installing
+#        echo "INFO: Setting of DATABASE ..."
+#        mkdir -p /home/bak
+#        mv $DRUPAL_PRJ/web/core/lib/Drupal/Core/Database/Install/Tasks.php /home/bak/Tasks$(date +%s).php
+#        cp $DRUPAL_SOURCE/drupal-database-install-tasks.php $DRUPAL_PRJ/web/core/lib/Drupal/Core/Database/Install/Tasks.php
+#        # cd $DRUPAL_PRJ/
+#    fi
+
+    # restore old site to drupal project
+#    if [ -d /home/bak/drupal_site ]; then
+#        echo "INFO: Restore old version site ..."
+#        while test -d "$DRUPAL_PRJ/web"
+#        do
+#            # mv is faster than rm.
+#            mv $DRUPAL_PRJ/web /home/bak/drupal_prj_web_bak$(date +%s)
+#        done
+#        mv /home/bak/drupal_site $DRUPAL_PRJ/web/
+#    fi
+        
+  chmod a+w "$DRUPAL_PRJ/web/sites/default"
+  cp "$DRUPAL_SRC/settings.local.php" "$DRUPAL_PRJ/web/sites/default/settings.local.php"
+  test ! -d "$DRUPAL_PRJ/web/sites/default/files" && mkdir -p "$DRUPAL_PRJ/web/sites/default/files"
+  chmod a+w "$DRUPAL_PRJ/web/sites/default/files"
+  chmod a+w "$DRUPAL_PRJ/web/sites/default/settings.php"
+  while test -d "$DRUPAL_HOME"
+  do
+      echo "INFO: $DRUPAL_HOME exists.  Clean it ..."
+      chmod 777 -R $DRUPAL_HOME
+      rm -Rf $DRUPAL_HOME
+  done
+  ln -s $DRUPAL_PRJ/web  $DRUPAL_HOME
+}
+
+if [ ! $WEBSITES_ENABLE_APP_SERVICE_STORAGE ]; then 
+    echo "INFO: NOT in Azure, chown for "$DRUPAL_HOME 
+    chown -R nginx:nginx $DRUPAL_HOME
+fi
+
+echo "Setup openrc ..." && openrc && touch /run/openrc/softlevel
+
+# setup Drupal
+setup_drupal
+#if [ -e "$DRUPAL_HOME/sites/default/settings.php" ]; then
+## Site is exist.
+#    if [ -d "$DRUPAL_PRJ" ]; then
+#    # site is exist and is built by composer build, no need to git pull again.
+#        echo "INFO: $DRUPAL_PRJ is exist..."
+#        echo "INFO: Site is Ready..."
+#    else
+#    # site is exist and it's not built by composer build, backup it at first.
+#        echo "INFO: Old Version Site is exist, Backup Site..."
+#        if [ -d /home/bak/drupal_site ]; then
+#            mv /home/bak/drupal_site /home/bak/drupal_site$(date +%s)
+#        else
+#            mkdir -p /home/bak
+#        fi
+#        mv $DRUPAL_HOME /home/bak/drupal_site
+#        echo "Installing Drupal ..."
+#        setup_drupal
+#    fi
+#else
+## drupal isn't installed, fresh start
+#    echo "Installing Drupal ..."
+#    setup_drupal
+#fi
+
+if [ ! $WEBSITES_ENABLE_APP_SERVICE_STORAGE ]; then
+    echo "INFO: NOT in Azure, chown for "$DRUPAL_PRJ  
+    chown -R nginx:nginx $DRUPAL_PRJ
+
+    echo "NOT in AZURE, Start crond, log rotate..."
+    crond
+fi
+
+# Persist drupal/sites
+test ! -d "$DRUPAL_STORAGE" && mkdir -p "$DRUPAL_STORAGE"
+#test -d "$DRUPAL_STORAGE/sites" && mv $DRUPAL_PRJ/web/sites $DRUPAL_PRJ/web/sites-bak
+test ! -d "$DRUPAL_STORAGE/sites" && mv $DRUPAL_PRJ/web/sites $DRUPAL_STORAGE/sites
+ln -s $DRUPAL_STORAGE/sites $DRUPAL_PRJ/web/sites
+#test -d "$DRUPAL_STORAGE/modules" && mv $DRUPAL_PRJ/web/modules $DRUPAL_PRJ/web/modules-bak
+#test ! -d "$DRUPAL_STORAGE/modules" && mv $DRUPAL_PRJ/web/modules $DRUPAL_STORAGE/modules
+#ln -s $DRUPAL_STORAGE/modules $DRUPAL_PRJ/web/modules
+#test -d "$DRUPAL_STORAGE/themes" && mv $DRUPAL_PRJ/web/themes $DRUPAL_PRJ/web/themes-bak
+#test ! -d "$DRUPAL_STORAGE/themes" && mv $DRUPAL_PRJ/web/themes $DRUPAL_STORAGE/themes
+#ln -s $DRUPAL_STORAGE/themes $DRUPAL_PRJ/web/themes
+
+# Create log folders
+test ! -d "$SUPERVISOR_LOG_DIR" && echo "INFO: $SUPERVISOR_LOG_DIR not found. creating ..." && mkdir -p "$SUPERVISOR_LOG_DIR"
+test ! -d "$VARNISH_LOG_DIR" && echo "INFO: Log folder for varnish found. creating..." && mkdir -p "$VARNISH_LOG_DIR"
+test ! -d "$NGINX_LOG_DIR" && echo "INFO: Log folder for nginx/php not found. creating..." && mkdir -p "$NGINX_LOG_DIR"
+test ! -e /home/50x.html && echo "INFO: 50x file not found. createing..." && cp /usr/share/nginx/html/50x.html /home/50x.html
+# Backup default nginx setting, use customer's nginx setting
+test -d "/home/etc/nginx" && mv /etc/nginx /etc/nginx-bak && ln -s /home/etc/nginx /etc/nginx
+test ! -d "/home/etc/nginx" && mkdir -p /home/etc && mv /etc/nginx /home/etc/nginx && ln -s /home/etc/nginx /etc/nginx
+# Backup default varnish setting, use customer's nginx setting
+test -d "/home/etc/varnish" && mv /etc/varnish /etc/varnish-bak && ln -s /home/etc/varnish /etc/varnish
+test ! -d "/home/etc/varnish" && mkdir -p /home/etc && mv /etc/varnish /home/etc/varnish && ln -s /home/etc/varnish /etc/varnish
+
+echo "Starting Varnishd ..."
+/usr/sbin/varnishd -a :80 -f /etc/varnish/default.vcl
+
+echo "INFO: creating /run/php/php-fpm.sock ..."
+test -e /run/php/php7.0-fpm.sock && rm -f /run/php/php7.0-fpm.sock
+mkdir -p /run/php && touch /run/php/php7.0-fpm.sock && chown nginx:nginx /run/php/php7.0-fpm.sock && chmod 777 /run/php/php7.0-fpm.sock
+
+sed -i "s/SSH_PORT/$SSH_PORT/g" /etc/ssh/sshd_config
+
+# Get environment variables to show up in SSH session
+eval $(printenv | awk -F= '{print "export " "\""$1"\"""=""\""$2"\"" }' >> /etc/profile)
+
+echo "Starting SSH ..."
+echo "Starting php-fpm ..."
+echo "Starting Nginx ..."
+
+cd /usr/bin/
+supervisord -c /etc/supervisord.conf
