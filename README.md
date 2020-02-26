@@ -82,3 +82,7 @@ Contains:
 1. The container will clone the given GIT_REPO if source is not found or RESET_INSTANCE is true.
 2. Otherwise, it reuses existing source code.
 3. It will move the Drupal files folder into a persistent storage, and symlink to it from the source code.
+
+## TODO
+* Enable SSL connection for MySQL
+* Use Azure connection string for DB credentials, instead of ENV
