@@ -1,4 +1,4 @@
-FROM judicialcouncil/nginx-fpm-php:1.0
+FROM judicialcouncil/nginx-fpm-php:1.1
 LABEL maintainer ="Azure App Service Container Images <appsvc-images@microsoft.com>"
 # ========
 # ENV vars
@@ -49,12 +49,12 @@ RUN set -ex \
         libzip-dev \
         freetype-dev \			                  
 	&& docker-php-ext-configure gd \
-		--with-freetype=/usr/include/ \
-		--with-jpeg=/usr/include/ \
-    && docker-php-ext-configure zip \
+		--with-freetype-dir=/usr/include/ \
+		--with-jpeg-dir=/usr/include/ \
+		--with-png-dir=/usr/include/ \
 	&& docker-php-ext-install -j "$(nproc)" \
-		gd \		
-		zip \		
+		gd \
+		zip \
 	&& runDeps="$( \
 		scanelf --needed --nobanner --format '%n#p' --recursive /usr/local \
 			| tr ',' '\n' \
@@ -62,11 +62,11 @@ RUN set -ex \
 			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
 	)" \
 	&& apk add --virtual .drupal-phpexts-rundeps $runDeps \
-	&& apk del .build-deps \	
+	&& apk del .build-deps \
 	&& docker-php-source delete \
     # session_save_path
     && mkdir -p /usr/local/php/tmp \
-    && chmod 777 /usr/local/php/tmp \	
+    && chmod 777 /usr/local/php/tmp \
 # -------------
 # 1. Drupal
 # -------------

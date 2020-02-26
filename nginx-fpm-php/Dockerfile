@@ -1,4 +1,4 @@
-FROM php:7.4.2-fpm-alpine3.11
+FROM php:7.3.15-fpm-alpine3.11
 LABEL maintainer="Judicial Council <webdev@jud.ca.gov>"
 # ========
 # ENV vars
