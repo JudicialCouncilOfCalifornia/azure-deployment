@@ -1,5 +1,5 @@
 FROM judicialcouncil/nginx-fpm-php:1.1
-LABEL maintainer ="Azure App Service Container Images <appsvc-images@microsoft.com>"
+LABEL maintainer ="Judicial Council <webdev@jud.ca.gov>"
 # ========
 # ENV vars
 # ========
