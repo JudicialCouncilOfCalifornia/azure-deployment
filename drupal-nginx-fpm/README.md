@@ -12,7 +12,7 @@ This docker image currently contains the following components:
 5. Composer (1.8.5)
 
 ## How to Deploy to Azure 
-1. Create a Web App for Containers, set Docker container as ```judicialcouncil/drupal-nginx-fpm:original``` 
+1. Create a Web App for Containers, set Docker container as ```judicialcouncil/drupal-nginx-fpm:1.0``` 
 2. Add the following settings variables:
 
 Name | Default Value

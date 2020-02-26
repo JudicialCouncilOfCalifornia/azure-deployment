@@ -1,4 +1,4 @@
-FROM judicialcouncil/nginx-fpm:original
+FROM judicialcouncil/nginx-fpm-php:1.0
 LABEL maintainer ="Azure App Service Container Images <appsvc-images@microsoft.com>"
 # ========
 # ENV vars
@@ -9,6 +9,7 @@ ENV DOCKER_BUILD_HOME "/dockerbuild"
 ENV DRUPAL_HOME "/home/site/wwwroot"
 ENV DRUPAL_PRJ "/home/drupal_source"
 ENV DRUPAL_STORAGE "/home/drupal_storage"
+ENV DRUPAL_BACKUP "/home/drupal_backup"
 # mariadb
 ENV MARIADB_DATA_DIR "/home/data/mysql"
 ENV MARIADB_LOG_DIR "/home/LogFiles/mysql"

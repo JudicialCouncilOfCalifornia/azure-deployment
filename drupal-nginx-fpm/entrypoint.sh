@@ -7,9 +7,9 @@ php -v
 fresh_drupal_installation(){
   while test -d "$DRUPAL_PRJ"
     do
-      test ! -d "/home/bak" && mkdir -p "/home/bak"
+      test ! -d "$DRUPAL_BACKUP" && mkdir -p "$DRUPAL_BACKUP"
       echo "INFO: $DRUPAL_PRJ exists. Clean it ..."
-      mv $DRUPAL_PRJ /home/bak/drupal_prj_bak_$(date +%s)
+      mv $DRUPAL_PRJ $DRUPAL_BACKUP/drupal_source_$(date +%s)
     done
 
   test ! -d "$DRUPAL_PRJ" && echo "INFO: $DRUPAL_PRJ not found. Creating..." && mkdir -p "$DRUPAL_PRJ"
@@ -35,33 +35,16 @@ fresh_drupal_installation(){
 
 # Setup Drupal
 setup_drupal(){
-  if [ ! -d "$DRUPAL_PROJECT" ] || [ "$RESET_INSTANCE" ];then
+  if [ ! -d "$DRUPAL_PRJ" ] || [ "$RESET_INSTANCE" ];then
     # New installation or explicit reset
+    echo "FRESH DRUPAL INSTALLATION..."
     fresh_drupal_installation
   fi
 
-#    if [ $DATABASE_USERNAME ]; then
-#        #cd $DRUPAL_PRJ/web/core/lib/Drupal/Core/Database/Installing
-#        echo "INFO: Setting of DATABASE ..."
-#        mkdir -p /home/bak
-#        mv $DRUPAL_PRJ/web/core/lib/Drupal/Core/Database/Install/Tasks.php /home/bak/Tasks$(date +%s).php
-#        cp $DRUPAL_SOURCE/drupal-database-install-tasks.php $DRUPAL_PRJ/web/core/lib/Drupal/Core/Database/Install/Tasks.php
-#        # cd $DRUPAL_PRJ/
-#    fi
-
-    # restore old site to drupal project
-#    if [ -d /home/bak/drupal_site ]; then
-#        echo "INFO: Restore old version site ..."
-#        while test -d "$DRUPAL_PRJ/web"
-#        do
-#            # mv is faster than rm.
-#            mv $DRUPAL_PRJ/web /home/bak/drupal_prj_web_bak$(date +%s)
-#        done
-#        mv /home/bak/drupal_site $DRUPAL_PRJ/web/
-#    fi
-        
+  echo "DEPLOYING SITE SETTINGS..."
   chmod a+w "$DRUPAL_PRJ/web/sites/default"
-  cp "$DRUPAL_SRC/settings.local.php" "$DRUPAL_PRJ/web/sites/default/settings.local.php"
+  test -d "$DRUPAL_PRJ/web/sites/default/settings.local.php" && chmod a+w "$DRUPAL_PRJ/web/sites/default/settings.local.php" && rm "$DRUPAL_PRJ/web/sites/default/settings.local.php"
+  cp "$DRUPAL_SOURCE/settings.local.php" "$DRUPAL_PRJ/web/sites/default/settings.local.php"
   test ! -d "$DRUPAL_PRJ/web/sites/default/files" && mkdir -p "$DRUPAL_PRJ/web/sites/default/files"
   chmod a+w "$DRUPAL_PRJ/web/sites/default/files"
   chmod a+w "$DRUPAL_PRJ/web/sites/default/settings.php"
@@ -83,29 +66,6 @@ echo "Setup openrc ..." && openrc && touch /run/openrc/softlevel
 
 # setup Drupal
 setup_drupal
-#if [ -e "$DRUPAL_HOME/sites/default/settings.php" ]; then
-## Site is exist.
-#    if [ -d "$DRUPAL_PRJ" ]; then
-#    # site is exist and is built by composer build, no need to git pull again.
-#        echo "INFO: $DRUPAL_PRJ is exist..."
-#        echo "INFO: Site is Ready..."
-#    else
-#    # site is exist and it's not built by composer build, backup it at first.
-#        echo "INFO: Old Version Site is exist, Backup Site..."
-#        if [ -d /home/bak/drupal_site ]; then
-#            mv /home/bak/drupal_site /home/bak/drupal_site$(date +%s)
-#        else
-#            mkdir -p /home/bak
-#        fi
-#        mv $DRUPAL_HOME /home/bak/drupal_site
-#        echo "Installing Drupal ..."
-#        setup_drupal
-#    fi
-#else
-## drupal isn't installed, fresh start
-#    echo "Installing Drupal ..."
-#    setup_drupal
-#fi
 
 if [ ! $WEBSITES_ENABLE_APP_SERVICE_STORAGE ]; then
     echo "INFO: NOT in Azure, chown for "$DRUPAL_PRJ  
@@ -117,15 +77,8 @@ fi
 
 # Persist drupal/sites
 test ! -d "$DRUPAL_STORAGE" && mkdir -p "$DRUPAL_STORAGE"
-#test -d "$DRUPAL_STORAGE/sites" && mv $DRUPAL_PRJ/web/sites $DRUPAL_PRJ/web/sites-bak
-test ! -d "$DRUPAL_STORAGE/sites" && mv $DRUPAL_PRJ/web/sites $DRUPAL_STORAGE/sites
-ln -s $DRUPAL_STORAGE/sites $DRUPAL_PRJ/web/sites
-#test -d "$DRUPAL_STORAGE/modules" && mv $DRUPAL_PRJ/web/modules $DRUPAL_PRJ/web/modules-bak
-#test ! -d "$DRUPAL_STORAGE/modules" && mv $DRUPAL_PRJ/web/modules $DRUPAL_STORAGE/modules
-#ln -s $DRUPAL_STORAGE/modules $DRUPAL_PRJ/web/modules
-#test -d "$DRUPAL_STORAGE/themes" && mv $DRUPAL_PRJ/web/themes $DRUPAL_PRJ/web/themes-bak
-#test ! -d "$DRUPAL_STORAGE/themes" && mv $DRUPAL_PRJ/web/themes $DRUPAL_STORAGE/themes
-#ln -s $DRUPAL_STORAGE/themes $DRUPAL_PRJ/web/themes
+test ! -d "$DRUPAL_STORAGE/sites/default/files" && mv $DRUPAL_PRJ/web/sites/default/files $DRUPAL_STORAGE/files
+ln -s $DRUPAL_STORAGE/files $DRUPAL_PRJ/web/sites/default/files
 
 # Create log folders
 test ! -d "$SUPERVISOR_LOG_DIR" && echo "INFO: $SUPERVISOR_LOG_DIR not found. creating ..." && mkdir -p "$SUPERVISOR_LOG_DIR"
