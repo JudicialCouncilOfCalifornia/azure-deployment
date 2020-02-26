@@ -8,7 +8,7 @@ $config['config_split.config_split.stage']['status'] = TRUE;
 
 $databases['default']['default'] = array(
     'database' => $_ENV["DATABASE_NAME"],
-    'username' => $_ENV["DATABASE_USERNAME"],
+    'username' => $_ENV["DATABASE_USER"],
     'password' => $_ENV["DATABASE_PASSWORD"],
     'host' => $_ENV["DATABASE_HOST"],
     'driver' => 'mysql',
