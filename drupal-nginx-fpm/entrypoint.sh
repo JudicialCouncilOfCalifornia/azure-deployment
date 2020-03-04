@@ -35,7 +35,7 @@ fresh_drupal_installation(){
 
 # Setup Drupal
 setup_drupal(){
-  if [ ! -d "$DRUPAL_PRJ" ] || [ "$RESET_INSTANCE" ];then
+  if [ ! -d "$DRUPAL_PRJ" ] || [ "$RESET_INSTANCE" == "true" ];then
     # New installation or explicit reset
     echo "FRESH DRUPAL INSTALLATION..."
     fresh_drupal_installation
