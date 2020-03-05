@@ -8,6 +8,7 @@ ENV DOCKER_BUILD_HOME "/dockerbuild"
 # drupal 
 ENV DRUPAL_HOME "/home/site/wwwroot"
 ENV DRUPAL_PRJ "/home/drupal_source"
+ENV WWW_SUBDIR "web"
 ENV DRUPAL_STORAGE "/home/drupal_storage"
 ENV DRUPAL_BACKUP "/home/drupal_backup"
 # mariadb

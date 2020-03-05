@@ -54,7 +54,7 @@ setup_drupal(){
       chmod 777 -R $DRUPAL_HOME
       rm -Rf $DRUPAL_HOME
   done
-  ln -s $DRUPAL_PRJ/web  $DRUPAL_HOME
+  ln -s $DRUPAL_PRJ/$WWW_SUBDIR  $DRUPAL_HOME
 }
 
 if [ ! $WEBSITES_ENABLE_APP_SERVICE_STORAGE ]; then 
@@ -92,8 +92,16 @@ test ! -d "/home/etc/nginx" && mkdir -p /home/etc && mv /etc/nginx /home/etc/ngi
 test -d "/home/etc/varnish" && mv /etc/varnish /etc/varnish-bak && ln -s /home/etc/varnish /etc/varnish
 test ! -d "/home/etc/varnish" && mkdir -p /home/etc && mv /etc/varnish /home/etc/varnish && ln -s /home/etc/varnish /etc/varnish
 
-echo "Starting Varnishd ..."
-/usr/sbin/varnishd -a :80 -f /etc/varnish/default.vcl
+#echo "Starting Varnishd ..."
+if [ "$ENABLE_VARNISH" == "true" ];then
+  /usr/sbin/varnishd -a :80 -f /etc/varnish/default.vcl
+  sed -i 's|listen 80;|listen 8080;|g' /home/etc/nginx/nginx.conf
+  sed -i 's|listen [::]:80;|listen [::]:8080;|g' /home/etc/nginx/nginx.conf
+fi
+
+if [ "$HTML_ONLY" == "true" ];then
+  sed -i 's|try_files $uri /index.php?$query_string;|try_files $uri /index.html;|g' /home/etc/nginx/nginx.conf
+fi
 
 echo "INFO: creating /run/php/php-fpm.sock ..."
 test -e /run/php/php7.0-fpm.sock && rm -f /run/php/php7.0-fpm.sock
