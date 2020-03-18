@@ -13,14 +13,6 @@ ENV NGINX_LOG_DIR "/home/LogFiles/nginx"
 ENV PHP_HOME "/usr/local/etc/php"
 ENV PHP_CONF_DIR $PHP_HOME
 ENV PHP_CONF_FILE $PHP_CONF_DIR"/php.ini"
-# mariadb
-ENV MARIADB_DATA_DIR "/home/data/mysql"
-ENV MARIADB_LOG_DIR "/home/LogFiles/mysql"
-ENV MARIADB_VER 10.1.38
-ENV JUDY_VER 1.0.5
-# phpmyadmin
-ENV PHPMYADMIN_SOURCE "/usr/src/phpmyadmin"
-ENV PHPMYADMIN_HOME "/home/phpmyadmin"
 #Web Site Home
 ENV HOME_SITE "/home/site/wwwroot"
 # supervisor
@@ -241,143 +233,6 @@ RUN set -ex \
     && mkdir -p ${HOME_SITE} \
     && chown -R www-data:www-data $HOME_SITE \
     && echo "<?php phpinfo();" > $HOME_SITE/index.php \
-# ------
-# mariadb
-# ------
-# RUN set -ex\ 
-    #export CPU=`cat /proc/cpuinfo | grep -c processor` \
-    # Add testing repo
-    && echo http://nl.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories \
-    # Install packages
-    #&& apk add --no-cache \
-        # Install utils
-    #    openssl ca-certificates \
-    &&	apk add --update --no-cache -t .mariadb-run-deps \
-        libaio \
-        libstdc++ \
-        make \
-        pwgen \
-        sudo \
-        tzdata \
-		# MariaDB 10.1 does not support OpenSSL 1.1.
-        $(test "${MARIADB_VER:0:4}" = "10.1" && echo 'libressl-dev' || echo 'openssl-dev') \
-    \
-    && apk add --update --no-cache -t .mariadb-build-deps \
-        attr \
-        autoconf \
-        bison \
-        build-base \
-        cmake \
-        coreutils \
-        gnupg \
-        libaio-dev \        
-        linux-headers \
-        ncurses-dev \
-        patch \
-        readline-dev \
-        zlib-dev \
-    \
-    # Update CA certs
-    && update-ca-certificates \
-    # Add group and user for mysql
-    && addgroup -S -g 500 mysql \
-    && adduser -S -D -H -u 500 -G mysql -g "MySQL" mysql \
-# RUN set -ex\ 
-    # Unpack mariadb    
-	# http://ftp.hosteurope.de/mirror/archive.mariadb.org//mariadb-10.1.26/source/mariadb-10.1.26.tar.gz
-	&& mkdir -p /opt/src \
-	&& wget -O /opt/src/mdb.tar.gz http://ftp.hosteurope.de/mirror/archive.mariadb.org//mariadb-$MARIADB_VER/source/mariadb-$MARIADB_VER.tar.gz \
-    && mkdir -p /etc/mysql \
-    && cd /opt/src && tar -xf mdb.tar.gz && rm mdb.tar.gz \
-    # Download and unpack Judy (needed for OQGraph)
-    && wget -O /opt/src/judy.tar.gz http://downloads.sourceforge.net/project/judy/judy/Judy-${JUDY_VER}/Judy-${JUDY_VER}.tar.gz \
-    && cd /opt/src && tar -xf judy.tar.gz && rm judy.tar.gz \
-    # Build Judy
-    && cd /opt/src/judy-${JUDY_VER} \
-    && CFLAGS="-O2 -s" CXXFLAGS="-O2 -s" ./configure \
-    && make \
-    && make install \
-    # Build maridb
-    && mkdir -p /tmp/_ \
-    && cd /opt/src/mariadb-${MARIADB_VER} \
-    && cmake . \
-	        -DCMAKE_BUILD_TYPE=MinSizeRel \
-			-DCOMMON_C_FLAGS="-O3 -s -fno-omit-frame-pointer -pipe" \
-        	-DCOMMON_CXX_FLAGS="-O3 -s -fno-omit-frame-pointer -pipe" \
-            -DCMAKE_INSTALL_PREFIX=/usr \
-    		-DSYSCONFDIR=/etc/mysql \
-    		-DMYSQL_DATADIR=/var/lib/mysql \
-    		-DMYSQL_UNIX_ADDR=/run/mysqld/mysqld.sock \
-    		-DDEFAULT_CHARSET=utf8 \
-    		-DDEFAULT_COLLATION=utf8_general_ci \
-    		-DENABLED_LOCAL_INFILE=ON \
-    		-DINSTALL_INFODIR=share/mysql/docs \
-    		-DINSTALL_MANDIR=/tmp/_/share/man \
-    		-DINSTALL_PLUGINDIR=lib/mysql/plugin \
-    		-DINSTALL_SCRIPTDIR=bin \
-    		# -DINSTALL_INCLUDEDIR=/tmp/_/include/mysql \
-    		-DINSTALL_DOCREADMEDIR=/tmp/_/share/mysql \
-    		-DINSTALL_SUPPORTFILESDIR=share/mysql \
-    		-DINSTALL_MYSQLSHAREDIR=share/mysql \
-    		-DINSTALL_DOCDIR=/tmp/_/share/mysql/docs \
-    		-DINSTALL_SHAREDIR=share/mysql \
-    		-DWITH_READLINE=ON \
-    		-DWITH_ZLIB=system \
-    		-DWITH_SSL=system \
-    		-DWITH_LIBWRAP=OFF \
-    		-DWITH_JEMALLOC=no \
-    		-DWITH_EXTRA_CHARSETS=complex \
-			-DPLUGIN_ARCHIVE=STATIC \
-            -DPLUGIN_BLACKHOLE=DYNAMIC \
-            -DPLUGIN_INNOBASE=STATIC \
-            -DPLUGIN_PARTITION=AUTO \
-            -DPLUGIN_CONNECT=NO \  		
-    		# -DWITH_ARCHIVE_STORAGE_ENGINE=1 \
-    		# -DWITH_BLACKHOLE_STORAGE_ENGINE=1 \
-    		# -DWITH_INNOBASE_STORAGE_ENGINE=1 \
-    		# -DWITH_PARTITION_STORAGE_ENGINE=1 \
-    		-DPLUGIN_TOKUDB=NO \
-			-DWITHOUT_FEDERATED_STORAGE_ENGINE=1 \
-    		-DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 \    		
-    		-DWITHOUT_PBXT_STORAGE_ENGINE=1 \
-			-DWITH_EMBEDDED_SERVER=OFF \
-    && make -j "$(nproc)" \
-    && make -j "$(nproc)" install \
-    # Copy default config, and remove deprecates and not working things
-    && cp /usr/share/mysql/my-large.cnf /etc/mysql/my.cnf \
-    && echo "!includedir /etc/mysql/conf.d/" >>/etc/mysql/my.cnf \
-    && sed -i '/# Try number of CPU/d' /etc/mysql/my.cnf \
-    && sed -i '/thread_concurrency = 8/d' /etc/mysql/my.cnf \
-    && sed -i '/innodb_additional_mem_pool_size/d' /etc/mysql/my.cnf \
-    && sed -i 's/log-bin=/#log-bin=/' /etc/mysql/my.cnf \
-    && sed -i 's/binlog_format=/#binlog_format=/' /etc/mysql/my.cnf \
-    && sed -i 's/#innodb_/innodb_/' /etc/mysql/my.cnf \
-    # Clean everything
-    && rm -rf /opt/src \
-    && rm -rf /tmp/_ \
-    && rm -rf /usr/sql-bench \
-    && rm -rf /usr/mysql-test \
-    && rm -rf /usr/data \
-    && rm -rf /usr/lib/python2.7 \
-    && rm -rf /usr/bin/mysql_client_test \
-    && rm -rf /usr/bin/mysqltest \	
-    # Remove packages
-    #&& apk del \
-    #    ca-certificates \
-    # Create needed directories
-    && mkdir -p /var/lib/mysql \
-    && mkdir -p /run/mysqld \
-    && mkdir /etc/mysql/conf.d \
-    && mkdir -p /opt/mariadb/pre-init.d \
-    && mkdir -p /opt/mariadb/post-init.d \
-    && mkdir -p /opt/mariadb/pre-exec.d \
-    # Set permissions
-    && chown -R mysql:mysql /var/lib/mysql \
-    && chown -R mysql:mysql /run/mysqld\
-    && chmod -R 755 /opt/mariadb \
-	\
-    # Clean up.
-    && apk del --purge .mariadb-build-deps \
 #
 # -------------
 # log rotate & supervisor
@@ -386,10 +241,6 @@ RUN set -ex \
 	&& apk add logrotate supervisor \	
 	# check log files once every minute, triaged by crond.
 	&& echo "*       *       *       *       *       sh /usr/local/bin/triage-rotate.sh" >> /etc/crontabs/root \
-# -------------
-# phpmyadmin
-# -------------
-    && mkdir -p $PHPMYADMIN_SOURCE \
 # ----------
 # ~. upgrade/clean up
 # ----------
@@ -399,10 +250,7 @@ RUN set -ex \
 # =========
 # Configure
 # =========
-# RUN set -ex\    		
-	##
-	&& rm -rf /var/log/mysql \
-	&& ln -s $MARIADB_LOG_DIR /var/log/mysql \
+# RUN set -ex\
 	##
 	&& rm -rf /var/log/nginx \
 	&& ln -s $NGINX_LOG_DIR /var/log/nginx \
@@ -422,11 +270,6 @@ COPY php-fpm.conf /usr/local/etc/
 # nginx
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY nginx_conf/. /etc/nginx/conf.d/
-# mariadb
-COPY mariadb.cnf /etc/mysql/my.cnf
-# COPY my.cnf /etc/my.cnf
-# phpmyadmin
-COPY phpmyadmin_src/. $PHPMYADMIN_SOURCE/
 # log rotater
 COPY logrotate.conf /etc/logrotate.conf
 RUN chmod 444 /etc/logrotate.conf

@@ -1,22 +1,17 @@
-FROM judicialcouncil/nginx-fpm-php:1.1
+FROM jccwebservicesregistry.azurecr.io/source/nginx-fpm-php:1.2
 LABEL maintainer ="Judicial Council <webdev@jud.ca.gov>"
 # ========
 # ENV vars
 # ========
 #
 ENV DOCKER_BUILD_HOME "/dockerbuild"
-# drupal 
+# drupal
+ENV DRUPAL_BUILD "/usr/src/build"
 ENV DRUPAL_HOME "/home/site/wwwroot"
 ENV DRUPAL_PRJ "/home/drupal_source"
 ENV WWW_SUBDIR "web"
 ENV DRUPAL_STORAGE "/home/drupal_storage"
 ENV DRUPAL_BACKUP "/home/drupal_backup"
-# mariadb
-ENV MARIADB_DATA_DIR "/home/data/mysql"
-ENV MARIADB_LOG_DIR "/home/LogFiles/mysql"
-# phpmyadmin
-ENV PHPMYADMIN_SOURCE "/usr/src/phpmyadmin"
-ENV PHPMYADMIN_HOME "/home/phpmyadmin"
 # drupal
 ENV DRUPAL_SOURCE "/usr/src/drupal"
 #nginx
@@ -113,8 +108,6 @@ COPY nginx.conf /etc/nginx/
 COPY php.ini $PHP_CONF_FILE
 # drupal
 COPY settings.local.php ${DRUPAL_SOURCE}
-# phpmyadmin
-COPY phpmyadmin_src/. $PHPMYADMIN_SOURCE/
 # Varinish
 COPY default.vcl /etc/varnish/default.vcl
 # =====

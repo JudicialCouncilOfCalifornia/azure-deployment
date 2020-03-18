@@ -4,76 +4,38 @@
 
 php -v
 
-fresh_drupal_installation(){
-  while test -d "$DRUPAL_PRJ"
-    do
-      test ! -d "$DRUPAL_BACKUP" && mkdir -p "$DRUPAL_BACKUP"
-      echo "INFO: $DRUPAL_PRJ exists. Clean it ..."
-      mv $DRUPAL_PRJ $DRUPAL_BACKUP/drupal_source_$(date +%s)
-    done
-
-  test ! -d "$DRUPAL_PRJ" && echo "INFO: $DRUPAL_PRJ not found. Creating..." && mkdir -p "$DRUPAL_PRJ"
-
-  cd $DRUPAL_PRJ
-  GIT_REPO=${GIT_REPO:-https://github.com/JudicialCouncilOfCalifornia/trialcourt}
-  GIT_BRANCH=${GIT_BRANCH:-develop}
-  echo "INFO: ++++++++++++++++++++++++++++++++++++++++++++++++++:"
-  echo "REPO: "$GIT_REPO
-  echo "BRANCH: "$GIT_BRANCH
-  echo "INFO: ++++++++++++++++++++++++++++++++++++++++++++++++++:"
-
-  echo "INFO: Clone from "$GIT_REPO
-  git clone $GIT_REPO $DRUPAL_PRJ	&& cd $DRUPAL_PRJ
-  if [ "$GIT_BRANCH" != "master" ];then
-    echo "INFO: Checkout to "$GIT_BRANCH
-    git fetch origin
-    git branch --track $GIT_BRANCH origin/$GIT_BRANCH && git checkout $GIT_BRANCH
-  fi
-
-  composer install
-}
-
-# Setup Drupal
-setup_drupal(){
-  if [ ! -d "$DRUPAL_PRJ" ] || [ "$RESET_INSTANCE" == "true" ];then
-    # New installation or explicit reset
-    echo "FRESH DRUPAL INSTALLATION..."
-    fresh_drupal_installation
-  fi
-
-  echo "DEPLOYING SITE SETTINGS..."
-  chmod a+w "$DRUPAL_PRJ/web/sites/default"
-  test -d "$DRUPAL_PRJ/web/sites/default/settings.local.php" && chmod a+w "$DRUPAL_PRJ/web/sites/default/settings.local.php" && rm "$DRUPAL_PRJ/web/sites/default/settings.local.php"
-  cp "$DRUPAL_SOURCE/settings.local.php" "$DRUPAL_PRJ/web/sites/default/settings.local.php"
-  test ! -d "$DRUPAL_PRJ/web/sites/default/files" && mkdir -p "$DRUPAL_PRJ/web/sites/default/files"
-  chmod a+w "$DRUPAL_PRJ/web/sites/default/files"
-  chmod a+w "$DRUPAL_PRJ/web/sites/default/settings.php"
-  while test -d "$DRUPAL_HOME"
-  do
-      echo "INFO: $DRUPAL_HOME exists.  Clean it ..."
-      chmod 777 -R $DRUPAL_HOME
-      rm -Rf $DRUPAL_HOME
-  done
-  ln -s $DRUPAL_PRJ/$WWW_SUBDIR  $DRUPAL_HOME
-}
-
-if [ ! $WEBSITES_ENABLE_APP_SERVICE_STORAGE ]; then 
-    echo "INFO: NOT in Azure, chown for "$DRUPAL_HOME 
-    chown -R nginx:nginx $DRUPAL_HOME
-fi
-
 echo "Setup openrc ..." && openrc && touch /run/openrc/softlevel
 
 # setup Drupal
-setup_drupal
+echo "DEPLOYING SITE..."
 
-if [ ! $WEBSITES_ENABLE_APP_SERVICE_STORAGE ]; then
-    echo "INFO: NOT in Azure, chown for "$DRUPAL_PRJ  
-    chown -R nginx:nginx $DRUPAL_PRJ
+while test -d "$DRUPAL_PRJ"
+  do
+    test ! -d "$DRUPAL_BACKUP" && mkdir -p "$DRUPAL_BACKUP"
+    echo "INFO: $DRUPAL_PRJ exists. Clean it ..."
+    mv $DRUPAL_PRJ $DRUPAL_BACKUP/drupal_source_$(date +%s)
+  done
 
-    echo "NOT in AZURE, Start crond, log rotate..."
-    crond
-fi
+test ! -d "$DRUPAL_PRJ" && echo "INFO: $DRUPAL_PRJ not found. Creating..." && mkdir -p "$DRUPAL_PRJ"
+cd $DRUPAL_PRJ
+cp -R $DRUPAL_BUILD/* $DRUPAL_PRJ/.
+composer install
+
+# clean up current directory
+while test -d "$DRUPAL_HOME"
+do
+    echo "INFO: $DRUPAL_HOME exists.  Clean it ..."
+    chmod 777 -R $DRUPAL_HOME
+    rm -Rf $DRUPAL_HOME
+done
+ln -s $DRUPAL_PRJ/$WWW_SUBDIR  $DRUPAL_HOME
+
+test ! -d "$DRUPAL_PRJ/web/sites/default/files" && mkdir -p "$DRUPAL_PRJ/web/sites/default/files"
+chmod a+w "$DRUPAL_PRJ/web/sites/default"
+test -d "$DRUPAL_PRJ/web/sites/default/settings.local.php" && chmod a+w "$DRUPAL_PRJ/web/sites/default/settings.local.php" && rm "$DRUPAL_PRJ/web/sites/default/settings.local.php"
+cp "$DRUPAL_SOURCE/settings.local.php" "$DRUPAL_PRJ/web/sites/default/settings.local.php"
+chmod a+w "$DRUPAL_PRJ/web/sites/default/files"
+chmod a-w "$DRUPAL_PRJ/web/sites/default/settings.php"
 
 # Persist drupal/sites
 test ! -d "$DRUPAL_STORAGE" && mkdir -p "$DRUPAL_STORAGE"
