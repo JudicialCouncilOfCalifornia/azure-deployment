@@ -9,17 +9,11 @@ echo "Setup openrc ..." && openrc && touch /run/openrc/softlevel
 # setup Drupal
 echo "DEPLOYING SITE..."
 
-while test -d "$DRUPAL_PRJ"
-  do
-    test ! -d "$DRUPAL_BACKUP" && mkdir -p "$DRUPAL_BACKUP"
-    echo "INFO: $DRUPAL_PRJ exists. Clean it ..."
-    mv $DRUPAL_PRJ $DRUPAL_BACKUP/drupal_source_$(date +%s)
-  done
-
 test ! -d "$DRUPAL_PRJ" && echo "INFO: $DRUPAL_PRJ not found. Creating..." && mkdir -p "$DRUPAL_PRJ"
 cd $DRUPAL_PRJ
 cp -R $DRUPAL_BUILD/* $DRUPAL_PRJ/.
 composer install
+test ! -d $DRUPAL_HOME/themes/custom/jcc_base/node_modules && scripts/theme.sh -b jcc_base
 
 # clean up current directory
 while test -d "$DRUPAL_HOME"
@@ -28,7 +22,7 @@ do
     chmod 777 -R $DRUPAL_HOME
     rm -Rf $DRUPAL_HOME
 done
-ln -s $DRUPAL_PRJ/$WWW_SUBDIR  $DRUPAL_HOME
+ln -s $DRUPAL_PRJ/$WWW_SUBDIR $DRUPAL_HOME
 
 test ! -d "$DRUPAL_PRJ/web/sites/default/files" && mkdir -p "$DRUPAL_PRJ/web/sites/default/files"
 chmod a+w "$DRUPAL_PRJ/web/sites/default"

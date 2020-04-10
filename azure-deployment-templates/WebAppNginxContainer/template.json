@@ -1,0 +1,223 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "sites_app_service_name": {
+            "type": "String"
+        },
+        "serverfarms_app_service_plan": {
+            "type": "String"
+        },
+        "DATABASE_HOST": {
+            "type": "string",
+            "minLength": 1
+        },
+        "DATABASE_NAME": {
+            "type": "string",
+            "minLength": 1
+        },
+        "DATABASE_PASSWORD": {
+            "type": "string",
+            "minLength": 1
+        },
+        "DATABASE_USER": {
+            "type": "string",
+            "minLength": 1
+        },
+        "WEBSITES_ENABLE_APP_SERVICE_STORAGE": {
+            "type": "string",
+            "minLength": 1
+        },
+        "WEBSITES_CONTAINER_START_TIME_LIMIT": {
+            "type": "string",
+            "minLength": 1
+        },
+        "dockerRegistryUrl": {
+            "type": "string",
+            "minLength": 1
+        },
+        "dockerRegistryUsername": {
+            "type": "string",
+            "minLength": 1
+        },
+        "dockerRegistryPassword": {
+            "type": "string",
+            "minLength": 1
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2018-02-01",
+            "name": "[parameters('serverfarms_app_service_plan')]",
+            "location": "West US",
+            "sku": {
+                "name": "B1",
+                "tier": "Basic",
+                "size": "B1",
+                "family": "B",
+                "capacity": 1
+            },
+            "kind": "linux",
+            "properties": {
+                "perSiteScaling": false,
+                "maximumElasticWorkerCount": 1,
+                "isSpot": false,
+                "freeOfferExpirationTime": "2020-05-09T01:00:12.8433333",
+                "reserved": true,
+                "isXenon": false,
+                "hyperV": false,
+                "targetWorkerCount": 0,
+                "targetWorkerSizeId": 0
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "name": "[parameters('sites_app_service_name')]",
+            "location": "West US",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_app_service_plan'))]"
+            ],
+            "kind": "app,linux,container",
+            "properties": {
+                "enabled": true,
+                "hostNameSslStates": [
+                    {
+                        "name": "[concat(parameters('sites_app_service_name'), '.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "hostType": "Standard"
+                    },
+                    {
+                        "name": "[concat(parameters('sites_app_service_name'), '.scm.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "hostType": "Repository"
+                    }
+                ],
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_app_service_plan'))]",
+                "reserved": true,
+                "isXenon": false,
+                "hyperV": false,
+                "scmSiteAlsoStopped": false,
+                "clientAffinityEnabled": false,
+                "clientCertEnabled": false,
+                "hostNamesDisabled": false,
+                "containerSize": 0,
+                "dailyMemoryTimeQuota": 0,
+                "httpsOnly": false,
+                "redundancyMode": "None"
+            },
+            "resources": [
+                {
+                    "name": "appsettings",
+                    "type": "config",
+                    "apiVersion": "2015-08-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', parameters('sites_app_service_name'))]"
+                    ],
+                    "tags": {
+                        "displayName": "appsettings"
+                    },
+                    "properties": {
+                        "DATABASE_HOST": "[parameters('DATABASE_HOST')]",
+                        "DATABASE_NAME": "[parameters('DATABASE_NAME')]",
+                        "DATABASE_PASSWORD": "[parameters('DATABASE_PASSWORD')]",
+                        "DATABASE_USER": "[parameters('DATABASE_USER')]",
+                        "WEBSITES_ENABLE_APP_SERVICE_STORAGE": "[parameters('WEBSITES_ENABLE_APP_SERVICE_STORAGE')]",
+                        "WEBSITES_CONTAINER_START_TIME_LIMIT": "[parameters('WEBSITES_CONTAINER_START_TIME_LIMIT')]",
+                        "DOCKER_REGISTRY_SERVER_URL": "[parameters('dockerRegistryUrl')]",
+                        "DOCKER_REGISTRY_SERVER_USERNAME": "[parameters('dockerRegistryUsername')]",
+                        "DOCKER_REGISTRY_SERVER_PASSWORD": "[parameters('dockerRegistryPassword')]"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/config",
+            "apiVersion": "2018-11-01",
+            "name": "[concat(parameters('sites_app_service_name'), '/web')]",
+            "location": "West US",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_app_service_name'))]"
+            ],
+            "properties": {
+                "numberOfWorkers": 1,
+                "defaultDocuments": [
+                    "Default.htm",
+                    "Default.html",
+                    "Default.asp",
+                    "index.htm",
+                    "index.html",
+                    "iisstart.htm",
+                    "default.aspx",
+                    "index.php",
+                    "hostingstart.html"
+                ],
+                "netFrameworkVersion": "v4.0",
+                "linuxFxVersion": "DOCKER|jccwebservicesregistry.azurecr.io/source/drupal-nginx-fpm:1.3-static",
+                "requestTracingEnabled": false,
+                "remoteDebuggingEnabled": false,
+                "remoteDebuggingVersion": "VS2019",
+                "httpLoggingEnabled": false,
+                "logsDirectorySizeLimit": 35,
+                "detailedErrorLoggingEnabled": false,
+                "publishingUsername": "$jcc-caldog-prod",
+                "scmType": "None",
+                "use32BitWorkerProcess": true,
+                "webSocketsEnabled": false,
+                "alwaysOn": true,
+                "managedPipelineMode": "Integrated",
+                "virtualApplications": [
+                    {
+                        "virtualPath": "/",
+                        "physicalPath": "site\\wwwroot",
+                        "preloadEnabled": true
+                    }
+                ],
+                "loadBalancing": "LeastRequests",
+                "experiments": {
+                    "rampUpRules": []
+                },
+                "autoHealEnabled": false,
+                "localMySqlEnabled": false,
+                "ipSecurityRestrictions": [
+                    {
+                        "ipAddress": "Any",
+                        "action": "Allow",
+                        "priority": 1,
+                        "name": "Allow all",
+                        "description": "Allow all access"
+                    }
+                ],
+                "scmIpSecurityRestrictions": [
+                    {
+                        "ipAddress": "Any",
+                        "action": "Allow",
+                        "priority": 1,
+                        "name": "Allow all",
+                        "description": "Allow all access"
+                    }
+                ],
+                "scmIpSecurityRestrictionsUseMain": false,
+                "http20Enabled": false,
+                "minTlsVersion": "1.2",
+                "ftpsState": "AllAllowed",
+                "reservedInstanceCount": 0
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/hostNameBindings",
+            "apiVersion": "2018-11-01",
+            "name": "[concat(parameters('sites_app_service_name'), '/', parameters('sites_app_service_name'), '.azurewebsites.net')]",
+            "location": "West US",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_app_service_name'))]"
+            ],
+            "properties": {
+                "siteName": "jcc-caldog-prod",
+                "hostNameType": "Verified"
+            }
+        }
+    ]
+}

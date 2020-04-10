@@ -89,6 +89,10 @@ RUN set -ex \
     && rm -rf /var/log/varnish \
 	&& ln -s $VARNISH_LOG_DIR /var/log/varnish \
 # ----------
+# 5. Node
+# ----------
+    && apk add --update nodejs npm \
+# ----------
 # ~. clean up
 # ----------
 	&& apk upgrade \

@@ -1,0 +1,39 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "sites_app_service_name": {
+            "value": ""
+        },
+        "serverfarms_app_service_plan": {
+            "value": ""
+        },
+        "DATABASE_HOST": {
+            "value": ""
+        },
+        "DATABASE_NAME": {
+            "value": ""
+        },
+        "DATABASE_PASSWORD": {
+            "value": ""
+        },
+        "DATABASE_USER": {
+            "value": ""
+        },
+        "WEBSITES_ENABLE_APP_SERVICE_STORAGE": {
+            "value": "true"
+        },
+        "WEBSITES_CONTAINER_START_TIME_LIMIT": {
+            "value": "1800"
+        },
+        "dockerRegistryUrl": {
+            "value": ""
+        },
+        "dockerRegistryUsername": {
+            "value": ""
+        },
+        "dockerRegistryPassword": {
+            "value": ""
+        }
+    }
+}
