@@ -1,6 +1,10 @@
 # Azure template deployment
 
-This template creates a server and deploys a container.
+This deployment template deploys:
+- App Service Plan
+- App Service
+- Azure Database for MariaDB Server
+- Azure Cache for Redis
 
 ```
 az deployment group create \

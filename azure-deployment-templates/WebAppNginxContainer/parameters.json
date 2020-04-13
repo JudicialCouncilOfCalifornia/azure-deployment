@@ -2,10 +2,16 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "sites_app_service_name": {
+        "app_service_name": {
             "value": ""
         },
-        "serverfarms_app_service_plan": {
+        "service_plan_name": {
+            "value": ""
+        },
+        "redis_resource_name": {
+            "value": ""
+        },
+        "database_resource_name": {
             "value": ""
         },
         "DATABASE_HOST": {
@@ -18,6 +24,15 @@
             "value": ""
         },
         "DATABASE_USER": {
+            "value": ""
+        },
+        "REDIS_HOST": {
+            "value": ""
+        },
+        "REDIS_PORT": {
+            "value": ""
+        },
+        "REDIS_PASSWORD": {
             "value": ""
         },
         "WEBSITES_ENABLE_APP_SERVICE_STORAGE": {
