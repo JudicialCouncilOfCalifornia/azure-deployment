@@ -23,6 +23,8 @@ ENV PHP_CONF_FILE "/usr/local/etc/php/php.ini"
 # Composer
 # Updation: https://getcomposer.org/download/
 ENV COMPOSER_DOWNLOAD_URL "https://getcomposer.org/installer"
+# redis
+ENV PHPREDIS_VERSION 5.2.1
 # ====================
 # Download and Install
 # ~. essentials
@@ -39,6 +41,10 @@ RUN set -ex \
 # install the PHP extensions we need
 # postgresql-dev is needed for https://bugs.alpinelinux.org/issues/3642
     && docker-php-source extract \
+    && curl -L -o /tmp/redis.tar.gz https://github.com/phpredis/phpredis/archive/$PHPREDIS_VERSION.tar.gz \
+    && tar xfz /tmp/redis.tar.gz \
+    && rm -r /tmp/redis.tar.gz \
+    && mv phpredis-$PHPREDIS_VERSION /usr/src/php/ext/redis	\
     && apk add --no-cache --virtual .build-deps \
 		libjpeg-turbo-dev \
 		libpng-dev \
@@ -51,6 +57,7 @@ RUN set -ex \
 	&& docker-php-ext-install -j "$(nproc)" \
 		gd \
 		zip \
+		redis \
 	&& runDeps="$( \
 		scanelf --needed --nobanner --format '%n#p' --recursive /usr/local \
 			| tr ',' '\n' \

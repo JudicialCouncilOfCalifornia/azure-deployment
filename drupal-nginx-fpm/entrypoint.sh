@@ -9,20 +9,12 @@ echo "Setup openrc ..." && openrc && touch /run/openrc/softlevel
 # setup Drupal
 echo "DEPLOYING SITE..."
 
+WWW_ROOT=$DRUPAL_PRJ/$WWW_SUBDIR
 test ! -d "$DRUPAL_PRJ" && echo "INFO: $DRUPAL_PRJ not found. Creating..." && mkdir -p "$DRUPAL_PRJ"
 cd $DRUPAL_PRJ
 cp -R $DRUPAL_BUILD/* $DRUPAL_PRJ/.
 composer install
-test ! -d $DRUPAL_HOME/themes/custom/jcc_base/node_modules && scripts/theme.sh -b jcc_base
-
-# clean up current directory
-while test -d "$DRUPAL_HOME"
-do
-    echo "INFO: $DRUPAL_HOME exists.  Clean it ..."
-    chmod 777 -R $DRUPAL_HOME
-    rm -Rf $DRUPAL_HOME
-done
-ln -s $DRUPAL_PRJ/$WWW_SUBDIR $DRUPAL_HOME
+test ! -d $WWW_ROOT/themes/custom/jcc_base/node_modules && scripts/theme.sh -a
 
 test ! -d "$DRUPAL_PRJ/web/sites/default/files" && mkdir -p "$DRUPAL_PRJ/web/sites/default/files"
 chmod a+w "$DRUPAL_PRJ/web/sites/default"
@@ -54,6 +46,9 @@ if [ "$ENABLE_VARNISH" == "true" ];then
   sed -i 's|listen 80;|listen 8080;|g' /home/etc/nginx/nginx.conf
   sed -i 's|listen [::]:80;|listen [::]:8080;|g' /home/etc/nginx/nginx.conf
 fi
+
+# Set WWW root
+sed -i "s|WWW_ROOT|$WWW_ROOT|g" /home/etc/nginx/nginx.conf
 
 if [ "$HTML_ONLY" == "true" ];then
   sed -i 's|try_files $uri /index.php?$query_string;|try_files $uri /index.html;|g' /home/etc/nginx/nginx.conf
