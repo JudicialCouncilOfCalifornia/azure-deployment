@@ -79,9 +79,9 @@
                 "enableNonSslPort": true,
                 "redisConfiguration": {
                     "maxclients": "256",
-                    "maxmemory-reserved": "2",
-                    "maxfragmentationmemory-reserved": "12",
-                    "maxmemory-delta": "2"
+                    "maxmemory-reserved": "0",
+                    "maxfragmentationmemory-reserved": "0",
+                    "maxmemory-delta": "0"
                 }
             }
         },
@@ -2044,7 +2044,8 @@
             "name": "[parameters('app_service_name')]",
             "location": "West US",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', parameters('service_plan_name'))]"
+                "[resourceId('Microsoft.Web/serverfarms', parameters('service_plan_name'))]",
+                "[resourceId('Microsoft.Cache/Redis', parameters('redis_resource_name'))]"
             ],
             "kind": "app,linux,container",
             "properties": {
@@ -2092,7 +2093,7 @@
                         "DATABASE_USER": "[parameters('DATABASE_USER')]",
                         "REDIS_HOST": "[parameters('REDIS_HOST')]",
                         "REDIS_PORT": "[parameters('REDIS_PORT')]",
-                        "REDIS_PASSWORD": "[parameters('REDIS_PASSWORD')]",
+                        "REDIS_PASSWORD": "[listKeys(resourceId('Microsoft.Cache/Redis', parameters('app_service_name')), '2015-08-01').primaryKey]",
                         "WEBSITES_ENABLE_APP_SERVICE_STORAGE": "[parameters('WEBSITES_ENABLE_APP_SERVICE_STORAGE')]",
                         "WEBSITES_CONTAINER_START_TIME_LIMIT": "[parameters('WEBSITES_CONTAINER_START_TIME_LIMIT')]",
                         "DOCKER_REGISTRY_SERVER_URL": "[parameters('dockerRegistryUrl')]",
