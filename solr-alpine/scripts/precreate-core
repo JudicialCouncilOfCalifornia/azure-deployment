@@ -1,0 +1,44 @@
+#!/bin/bash
+#
+# Create a core on disk
+# arguments are: corename configdir
+
+set -e
+
+echo "Executing $0" "$@"
+
+if [[ "${VERBOSE:-}" == "yes" ]]; then
+    set -x
+fi
+
+CORES=${1:-gettingstarted}
+CONFIG_SOURCE="/opt/solr/server/solr/configsets/${2:-}"
+if [[ -z "$CONFIG_SOURCE" ]]; then
+    DEFAULT_CONFIGS=(_default data_driven_schema_configs)
+    for config_dir in "${DEFAULT_CONFIGS[@]}"; do
+        config_dir="/opt/solr/server/solr/configsets/$config_dir"
+        if [ -d "$config_dir" ]; then
+           CONFIG_SOURCE="$config_dir"
+           break
+        fi
+    done
+    if [[ -z $CONFIG_SOURCE ]]; then
+        echo "Cannot find default config"
+        exit 1
+    fi
+fi
+
+coresdir=/var/solr/data
+IFS=',' read -ra CORE <<< "$CORES"
+for i in "${CORE[@]}"; do
+    coredir="$coresdir/$i"
+    if [[ ! -d $coredir ]]; then
+        cp -r "$CONFIG_SOURCE/" "$coredir"
+        touch "$coredir/core.properties"
+        echo "Created $i"
+    else
+        echo "Core $i already exists"
+    fi
+done
+
+
