@@ -1,4 +1,4 @@
-FROM php:7.3.15-fpm-alpine3.11
+FROM php:7.4-fpm-alpine3.12
 LABEL maintainer="Judicial Council <webdev@jud.ca.gov>"
 # ========
 # ENV vars
@@ -7,7 +7,7 @@ LABEL maintainer="Judicial Council <webdev@jud.ca.gov>"
 ENV SSH_PASSWD "root:Docker!"
 ENV SSH_PORT 2222
 #nginx
-ENV NGINX_VERSION 1.16.1
+ENV NGINX_VERSION 1.23.2
 ENV NGINX_LOG_DIR "/home/LogFiles/nginx"
 #php
 ENV PHP_HOME "/usr/local/etc/php"
@@ -91,7 +91,7 @@ RUN set -ex \
 # Nginx
 # ----------
 # RUN set -ex\ 
-	&& GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
+	&& GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967 \
 	&& CONFIG="\
 		--prefix=/etc/nginx \
 		--sbin-path=/usr/sbin/nginx \
