@@ -1,4 +1,4 @@
-FROM php:7.4-fpm-alpine3.12
+FROM php:7.4.33-zts-alpine3.16
 LABEL maintainer="Judicial Council <webdev@jud.ca.gov>"
 # ========
 # ENV vars
@@ -149,7 +149,7 @@ RUN set -ex \
 		zlib-dev \
 		linux-headers \
 		curl \
-		gnupg1 \
+		gnupg \
 		libxslt-dev \
 		gd-dev \
 		geoip-dev \

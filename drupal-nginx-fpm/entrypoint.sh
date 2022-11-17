@@ -32,10 +32,10 @@ if [ ! -d "$DRUPAL_BUILD" ] || [ "$RESET_INSTANCE" == "true" ];then
 fi
 
 WWW_ROOT=$DRUPAL_PRJ/$WWW_SUBDIR
-test -d "$DRUPAL_PRJ" && echo "Removing $DRUPAL_PRJ"  && rm -rf "$DRUPAL_PRJ"
+test -d "$DRUPAL_PRJ" && echo "Removing $DRUPAL_PRJ" && cd "$DRUPAL_PRJ" && ls -f1 | xargs rm -rf
 echo "Creating $DRUPAL_PRJ" && mkdir -p "$DRUPAL_PRJ"
 cd $DRUPAL_PRJ
-cp -R $DRUPAL_BUILD/* $DRUPAL_PRJ/.
+cp -vR $DRUPAL_BUILD/* $DRUPAL_PRJ/.
 
 test ! -d "$DRUPAL_PRJ/web/sites/default/files" && mkdir -p "$DRUPAL_PRJ/web/sites/default/files"
 chmod a+w "$DRUPAL_PRJ/web/sites/default"

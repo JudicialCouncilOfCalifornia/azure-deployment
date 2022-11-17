@@ -1,4 +1,4 @@
-FROM devopswebcourtsnp.azurecr.io/nginx-fpm-php:1.3
+FROM devopswebcourtsnp.azurecr.io/nginx-fpm-php:1.4
 LABEL maintainer ="Judicial Council <webdev@jud.ca.gov>"
 # ========
 # ENV vars
