@@ -9,24 +9,56 @@ echo "Setup openrc ..." && openrc && touch /run/openrc/softlevel
 # setup Drupal
 echo "DEPLOYING SITE..."
 
+if [ ! -d "$DRUPAL_BUILD" ] || [ "$RESET_INSTANCE" == "true" ];then
+  echo "FRESH DRUPAL INSTALLATION..."
+  mkdir -p ${DRUPAL_BUILD}
+
+  GIT_REPO=${GIT_REPO:-https://github.com/judicialcouncilcalifornia/trialcourt.git}
+  GIT_BRANCH=${GIT_BRANCH:-master}
+  echo "INFO: ++++++++++++++++++++++++++++++++++++++++++++++++++:"
+  echo "REPO: "$GIT_REPO
+  echo "BRANCH: "$GIT_BRANCH
+  echo "INFO: ++++++++++++++++++++++++++++++++++++++++++++++++++:"
+
+  echo "INFO: Clone from "$GIT_REPO
+  git clone ${GIT_REPO} --branch ${GIT_BRANCH} repobuild
+  rm -rf repobuild/.git
+  cp -R repobuild/* ${DRUPAL_BUILD}/
+  rm -rf repobuild
+
+  cd ${DRUPAL_BUILD}
+  composer install
+  scripts/theme.sh -a
+fi
+
 WWW_ROOT=$DRUPAL_PRJ/$WWW_SUBDIR
-test ! -d "$DRUPAL_PRJ" && echo "INFO: $DRUPAL_PRJ not found. Creating..." && mkdir -p "$DRUPAL_PRJ"
+test -d "$DRUPAL_PRJ" && echo "Removing $DRUPAL_PRJ"  && rm -rf "$DRUPAL_PRJ"
+echo "Creating $DRUPAL_PRJ" && mkdir -p "$DRUPAL_PRJ"
 cd $DRUPAL_PRJ
 cp -R $DRUPAL_BUILD/* $DRUPAL_PRJ/.
-composer install
-test ! -d $WWW_ROOT/themes/custom/jcc_base/node_modules && scripts/theme.sh -a
 
 test ! -d "$DRUPAL_PRJ/web/sites/default/files" && mkdir -p "$DRUPAL_PRJ/web/sites/default/files"
 chmod a+w "$DRUPAL_PRJ/web/sites/default"
-test -d "$DRUPAL_PRJ/web/sites/default/settings.local.php" && chmod a+w "$DRUPAL_PRJ/web/sites/default/settings.local.php" && rm "$DRUPAL_PRJ/web/sites/default/settings.local.php"
-cp "$DRUPAL_SOURCE/settings.local.php" "$DRUPAL_PRJ/web/sites/default/settings.local.php"
 chmod a+w "$DRUPAL_PRJ/web/sites/default/files"
-chmod a-w "$DRUPAL_PRJ/web/sites/default/settings.php"
+
+# Tell code to use Azure Settings for all sites
+find $DRUPAL_PRJ/web/sites -maxdepth 1 -mindepth 1 -type d | while read dir; do
+  SITE_ID=$(basename $dir)
+
+  test -d "$dir/settings.local.php" && chmod a+w "$dir/settings.local.php" && rm "$dir/settings.local.php"
+  cp "$DRUPAL_SOURCE/settings.local.php" "$dir/settings.local.php"
+  chmod a-w "$dir/settings.php"
+  chmod a-w "$dir/settings.local.php"
+done
 
 # Persist drupal/sites
-test ! -d "$DRUPAL_STORAGE" && mkdir -p "$DRUPAL_STORAGE"
-test ! -d "$DRUPAL_STORAGE/sites/default/files" && mv $DRUPAL_PRJ/web/sites/default/files $DRUPAL_STORAGE/files
-ln -s $DRUPAL_STORAGE/files $DRUPAL_PRJ/web/sites/default/files
+if [ -d "$DRUPAL_STORAGE" ]
+then
+  test ! -d "$DRUPAL_STORAGE/files" && mkdir -p "$DRUPAL_STORAGE/files"
+  ln -s $DRUPAL_STORAGE/files $DRUPAL_PRJ/web/sites/default/files
+else
+    echo "Error: Directory $DRUPAL_STORAGE is not mounted."
+fi
 
 # Create log folders
 test ! -d "$SUPERVISOR_LOG_DIR" && echo "INFO: $SUPERVISOR_LOG_DIR not found. creating ..." && mkdir -p "$SUPERVISOR_LOG_DIR"

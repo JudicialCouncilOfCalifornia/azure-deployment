@@ -1,4 +1,4 @@
-FROM judicialcouncil/nginx-fpm-php:1.3
+FROM devopswebcourtsnp.azurecr.io/nginx-fpm-php:1.3
 LABEL maintainer ="Judicial Council <webdev@jud.ca.gov>"
 # ========
 # ENV vars
@@ -10,7 +10,7 @@ ENV DRUPAL_BUILD "/usr/src/build"
 ENV DRUPAL_HOME "/home/site/wwwroot"
 ENV DRUPAL_PRJ "/home/drupal_source"
 ENV WWW_SUBDIR "web"
-ENV DRUPAL_STORAGE "/home/drupal_storage"
+ENV DRUPAL_STORAGE "/storage/files"
 ENV DRUPAL_BACKUP "/home/drupal_backup"
 # drupal
 ENV DRUPAL_SOURCE "/usr/src/drupal"
@@ -24,7 +24,7 @@ ENV PHP_CONF_FILE "/usr/local/etc/php/php.ini"
 # Updation: https://getcomposer.org/download/
 ENV COMPOSER_DOWNLOAD_URL "https://getcomposer.org/installer"
 # redis
-ENV PHPREDIS_VERSION 5.2.1
+ENV PHPREDIS_VERSION 5.3.7
 # ====================
 # Download and Install
 # ~. essentials

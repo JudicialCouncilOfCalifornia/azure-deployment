@@ -1,7 +1,9 @@
-FROM jccwebservicesregistry.azurecr.io/source/drupal-nginx-fpm:1.3
+FROM devopswebcourtsnp.azurecr.io/drupal-nginx-fpm:1.4
 
-ENV GIT_REPO "https://github.com/JudicialCouncilOfCalifornia/trialcourt"
-ENV GIT_BRANCH "master"
+ARG GIT_REPO="https://github.com/judicialcouncilcalifornia/trialcourt.git"
+ENV GIT_REPO=$GIT_REPO
+ARG GIT_BRANCH="master"
+ENV GIT_BRANCH=$GIT_BRANCH
 
 RUN rm -rf ${DRUPAL_BUILD}
 RUN mkdir -p ${DRUPAL_BUILD}
